@@ -1,0 +1,1563 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Лапа — соцсеть для питомцев</title>
+<style>
+@layer od-layout {
+  :where(.od-stack,.od-row,.od-row-top,.od-cluster,.od-grid,.od-field,.od-stat,.od-cell,.od-tile) > :where(*) { min-width: 0; }
+  .od-stack   { display: flex; flex-direction: column; gap: var(--od-gap, 8px); }
+  .od-row     { display: flex; align-items: center; gap: var(--od-gap, 8px); }
+  .od-row-top { display: flex; align-items: flex-start; gap: var(--od-gap, 8px); }
+  .od-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--od-gap, 8px); }
+  .od-fill    { flex: 1 1 0; min-width: 0; }
+  .od-fixed   { flex: none; }
+  .od-grid    { display: grid; gap: var(--od-gap, 12px); grid-template-columns: repeat(var(--od-cols, 3), minmax(0, 1fr)); }
+  .od-stat, .od-field, .od-cell { display: grid; gap: var(--od-gap, 2px); }
+  :where(.od-stat,.od-field,.od-cell) > :where(*) { display: block; }
+  .od-tile { display: grid; grid-template-rows: auto 1fr; }
+  :where(.od-tile) > :where(*) { display: block; }
+  .od-media { display: block; width: 100%; height: auto; aspect-ratio: var(--od-ratio, auto); }
+  .od-media-cover { object-fit: cover; }
+  .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .od-clamp-2 { -webkit-line-clamp: 2; }
+  .od-clamp-3 { -webkit-line-clamp: 3; }
+  .od-lines-2 { min-height: calc(2 * 1.4em); }
+  .od-nowrap  { white-space: nowrap; }
+  .od-keep    { word-break: keep-all; overflow-wrap: anywhere; }
+  .od-screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+  .od-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+  .od-rail { display: flex; gap: var(--od-gap, 8px); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+             padding-inline: var(--od-rail-pad, 16px); scroll-padding-inline: var(--od-rail-pad, 16px); }
+  .od-rail::-webkit-scrollbar { display: none; }
+  :where(.od-rail) > :where(*) { flex: none; scroll-snap-align: start; }
+  :where(.od-rail) > :where(:last-child) { margin-inline-end: var(--od-rail-pad, 16px); }
+  .od-spacer { flex: none; visibility: hidden; pointer-events: none; }
+  .od-touch  { min-width: 44px; min-height: 44px; }
+}
+/* /OD-LAYOUT-PRIMITIVES v1 */
+
+:root {
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --ink: #1A1C1A;
+  --ink-2: #5C625E;
+  --line: #E7E6E1;
+  --accent: #0F6B4F;
+  --accent-ink: #0B5540;
+  --accent-soft: #E4F0E9;
+  --danger: #B3402F;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 6px 24px rgba(20,22,26,.06);
+  --tabbar-h: 56px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255,255,255,.92), transparent 34%),
+    #e9ebee;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  color: #17181a;
+}
+
+.phone-frame {
+  position: relative;
+  width: calc(393px + 12px * 2);
+  height: calc(852px + 12px * 2);
+  padding: 12px;
+  border-radius: 60px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.18), transparent 17%),
+    linear-gradient(160deg, #3a3a3d 0%, #1d1d20 47%, #09090b 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.13),
+    inset 0 0 0 2px rgba(0,0,0,.9),
+    0 34px 70px -20px rgba(0,0,0,.55),
+    0 12px 28px -12px rgba(0,0,0,.36);
+  isolation: isolate;
+}
+.phone-frame::before,
+.phone-frame::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 102px;
+  bottom: 102px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.13) 12%, transparent 22%, transparent 78%, rgba(255,255,255,.08) 90%, transparent);
+}
+.phone-frame::before { left: -1px; }
+.phone-frame::after { right: -1px; }
+
+.hardware-button {
+  position: absolute;
+  width: 4px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #050506, #242428 58%, #08080a);
+  box-shadow: inset 0 1px rgba(255,255,255,.08);
+}
+.hardware-button.silent { left: -3px; top: 175px; height: 34px; }
+.hardware-button.volume-up { left: -3px; top: 225px; height: 62px; }
+.hardware-button.volume-down { left: -3px; top: 299px; height: 62px; }
+.hardware-button.power { right: -3px; top: 252px; height: 104px; }
+
+.phone-screen {
+  position: relative;
+  width: 393px;
+  height: 852px;
+  overflow: hidden;
+  border-radius: 48px;
+  background: #f7f7f8;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+
+.phone-content {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-top: 59px;
+  padding-bottom: 34px;
+  background: #f7f7f8;
+}
+.phone-content::-webkit-scrollbar { display: none; }
+
+.dynamic-island {
+  position: absolute;
+  z-index: 20;
+  top: 11px;
+  left: 50%;
+  width: 126px;
+  height: 37px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #000;
+  box-shadow: inset 0 -1px 1px rgba(255,255,255,.05);
+  pointer-events: none;
+}
+.status-bar {
+  position: absolute;
+  z-index: 15;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 59px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 27px 0;
+  color: #111214;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  pointer-events: none;
+}
+.status-icons { display: inline-flex; align-items: center; gap: 6px; }
+.status-icons svg { display: block; width: 17px; height: 11px; fill: currentColor; }
+.status-icons .battery { width: 25px; }
+.home-indicator {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: 8px;
+  width: 134px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #111214;
+  opacity: .9;
+  pointer-events: none;
+}
+
+@media (max-height: 939px) { .phone-frame { zoom: 0.9; } }
+@media (max-height: 851px) { .phone-frame { zoom: 0.82; } }
+@media (max-height: 781px) { .phone-frame { zoom: 0.74; } }
+@media (max-height: 711px) { .phone-frame { zoom: 0.66; } }
+@media (max-width: 480px) {
+  body { padding: 0; display: block; }
+  .phone-frame { width: 100%; height: 100dvh; padding: 0; border-radius: 0; background: none; box-shadow: none; zoom: 1; }
+  .phone-frame::before, .phone-frame::after, .hardware-button { display: none; }
+  .phone-screen { width: 100%; height: 100%; border-radius: 0; }
+}
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.app-main { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.app-main::-webkit-scrollbar { display: none; }
+
+.screen { min-height: 100%; padding: 16px 16px 24px; }
+.screen[hidden] { display: none; }
+
+h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+.icon { width: 22px; height: 22px; flex: none; }
+.icon-sm { width: 18px; height: 18px; }
+
+.brand { display: flex; align-items: center; gap: 8px; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+.brand .paw-badge {
+  width: 34px; height: 34px; border-radius: 12px;
+  background: var(--accent); color: #fff;
+  display: grid; place-items: center;
+}
+.brand .paw-badge svg { width: 20px; height: 20px; }
+
+.search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 10px 14px; margin-top: 14px;
+}
+.search input { border: 0; background: none; flex: 1; min-width: 0; font-size: 15px; }
+.search input:focus { outline: none; }
+.search .icon { color: var(--ink-2); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.section-title { font-size: 17px; font-weight: 700; margin: 22px 0 10px; }
+.section-title:first-child { margin-top: 0; }
+
+.stories { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: none; }
+.stories::-webkit-scrollbar { display: none; }
+.story { flex: none; width: 68px; display: grid; gap: 6px; justify-items: center; }
+.story .ring {
+  width: 62px; height: 62px; border-radius: 50%; padding: 3px;
+  background: var(--accent-soft);
+}
+.story .ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--surface); }
+.story span { font-size: 12px; color: var(--ink-2); max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.post { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-top: 14px; overflow: hidden; }
+.post-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.post-head img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.post-head .who { flex: 1; min-width: 0; }
+.post-head .who b { display: block; font-size: 15px; }
+.post-head .who time { font-size: 13px; color: var(--ink-2); }
+.post-text { padding: 0 14px 10px; font-size: 15px; }
+.post-img { display: block; width: 100%; height: auto; }
+.post-actions { display: flex; align-items: center; gap: 6px; padding: 8px 10px; }
+.act {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 10px; border-radius: 999px;
+  color: var(--ink-2); font-size: 14px; font-weight: 600;
+}
+.act:hover { background: var(--bg); }
+.act.liked { color: var(--danger); }
+.act.liked svg { fill: var(--danger); }
+.post-likes { padding: 0 14px 6px; font-size: 14px; font-weight: 600; }
+.post-comments { padding: 0 14px 12px; display: grid; gap: 6px; }
+.post-comments p { font-size: 14px; }
+.post-comments b { font-weight: 700; }
+.comment-form { display: flex; gap: 8px; padding: 0 14px 14px; }
+.comment-form input {
+  flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 999px;
+  padding: 10px 14px; font-size: 14px; background: var(--bg);
+}
+.comment-form button {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: #fff; display: grid; place-items: center;
+}
+
+.pet-switch { display: flex; gap: 10px; margin-top: 14px; }
+.pet-chip {
+  flex: 1; display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 12px; text-align: left;
+}
+.pet-chip img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.pet-chip b { display: block; font-size: 15px; }
+.pet-chip small { color: var(--ink-2); font-size: 13px; }
+.pet-chip.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+
+.tabs { display: flex; gap: 8px; margin-top: 14px; }
+.tab {
+  flex: 1; min-height: 44px; border-radius: 999px; padding: 8px 4px;
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: 14px; font-weight: 600; color: var(--ink-2);
+}
+.tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.diary-body { margin-top: 14px; display: grid; gap: 12px; }
+
+.stat-card { padding: 16px; }
+.stat-card .label { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.stat-card .value { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-top: 2px; }
+.stat-card .value small { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.stat-card svg { display: block; margin-top: 8px; }
+
+.vet-card { padding: 16px; display: flex; gap: 14px; }
+.date-badge {
+  flex: none; width: 52px; height: 58px; border-radius: var(--radius-sm);
+  background: var(--accent-soft); color: var(--accent-ink);
+  display: grid; place-content: center; text-align: center; gap: 0;
+}
+.date-badge b { font-size: 22px; line-height: 1.1; }
+.date-badge span { font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.vet-card .info { flex: 1; min-width: 0; }
+.vet-card .info b { display: block; font-size: 16px; }
+.vet-card .info p { font-size: 14px; color: var(--ink-2); margin-top: 2px; }
+.vet-card .go { flex: none; align-self: center; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: 999px;
+  background: var(--accent); color: #fff; font-size: 15px; font-weight: 700;
+}
+.btn:hover { background: var(--accent-ink); }
+.btn.ghost { background: var(--surface); color: var(--accent-ink); border: 1px solid var(--line); }
+.btn.ghost:hover { background: var(--bg); }
+.btn.block { width: 100%; }
+.btn.danger { background: var(--danger); }
+
+.meal { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.meal .time { flex: none; width: 52px; font-weight: 700; font-size: 15px; color: var(--accent-ink); }
+.meal .what { flex: 1; min-width: 0; }
+.meal .what b { display: block; font-size: 15px; }
+.meal .what small { color: var(--ink-2); font-size: 13px; }
+.meal .kcal { flex: none; font-size: 14px; font-weight: 700; color: var(--ink-2); }
+.list { display: grid; gap: 8px; }
+
+.cal { padding: 14px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-head b { font-size: 16px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-grid .dow { text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-2); padding: 4px 0; }
+.day {
+  position: relative; aspect-ratio: 1; border-radius: 10px;
+  display: grid; place-items: center; font-size: 14px; font-weight: 600;
+  color: var(--ink); min-height: 40px;
+}
+.day.blank { background: none; }
+.day.today { box-shadow: inset 0 0 0 2px var(--accent); }
+.day.has-event { background: var(--accent-soft); color: var(--accent-ink); }
+.day.selected { background: var(--accent); color: #fff; }
+.day .dot { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.day.selected .dot { background: #fff; }
+
+.habit { display: flex; gap: 12px; padding: 14px; align-items: flex-start; }
+.habit .h-icon {
+  flex: none; width: 40px; height: 40px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent-ink);
+  display: grid; place-items: center;
+}
+.habit p { font-size: 15px; }
+
+.map-wrap { position: relative; margin-top: 14px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); }
+.map-wrap svg.map { display: block; width: 100%; height: auto; }
+.map-pin {
+  position: absolute; transform: translate(-50%, -100%);
+  display: grid; justify-items: center; gap: 2px;
+}
+.map-pin .bubble {
+  width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
+  border: 3px solid var(--surface); box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  background: var(--accent-soft);
+}
+.map-pin .bubble img { width: 100%; height: 100%; object-fit: cover; }
+.map-pin .bubble span { display: grid; place-items: center; width: 100%; height: 100%; font-weight: 800; color: var(--accent-ink); font-size: 16px; }
+.map-pin.me .bubble { border-color: var(--accent); }
+.map-pin .tag {
+  background: var(--ink); color: #fff; font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+}
+.fab {
+  position: absolute; right: 14px; bottom: 14px;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 48px; padding: 0 18px; border-radius: 999px;
+  background: var(--surface); color: var(--ink); font-size: 15px; font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18); border: 1px solid var(--line);
+}
+.fab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.near-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-top: 10px; }
+.near-card img, .near-card .avatar-fallback {
+  width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex: none;
+  display: grid; place-items: center; font-weight: 800; color: var(--accent-ink);
+  background: var(--accent-soft); font-size: 17px;
+}
+.near-card .who { flex: 1; min-width: 0; }
+.near-card .who b { display: block; font-size: 15px; }
+.near-card .who small { display: block; color: var(--ink-2); font-size: 13px; }
+.near-card .dist { flex: none; font-size: 13px; font-weight: 700; color: var(--accent-ink); }
+.near-card .btn { min-height: 40px; padding: 0 14px; font-size: 14px; }
+
+.group-card { display: flex; gap: 12px; padding: 12px 14px; margin-top: 10px; align-items: center; }
+.group-card img { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; flex: none; }
+.group-card .who { flex: 1; min-width: 0; }
+.group-card .who b { display: block; font-size: 15px; }
+.group-card .who small { color: var(--ink-2); font-size: 13px; }
+.group-card .btn { min-height: 40px; padding: 0 14px; font-size: 14px; }
+
+.profile-cover { position: relative; margin: -16px -16px 0; height: 180px; }
+.profile-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-head { display: flex; align-items: flex-end; gap: 14px; margin-top: -34px; padding: 0 4px; }
+.profile-head .avatar {
+  width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+  border: 4px solid var(--bg); flex: none; background: var(--surface);
+}
+.profile-head .names { flex: 1; min-width: 0; padding-bottom: 4px; }
+.profile-head .names b { font-size: 22px; letter-spacing: -.02em; }
+.profile-head .names p { color: var(--ink-2); font-size: 14px; }
+.profile-bio { padding: 12px 4px 0; font-size: 15px; color: var(--ink); }
+.profile-stats { display: flex; margin: 14px 4px 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.profile-stats > div { flex: 1; text-align: center; padding: 12px 4px; }
+.profile-stats b { display: block; font-size: 18px; }
+.profile-stats span { font-size: 12px; color: var(--ink-2); font-weight: 600; }
+.profile-actions { display: flex; gap: 10px; margin-top: 14px; }
+.profile-actions .btn { flex: 1; }
+
+.album { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.album button { padding: 0; border-radius: 12px; overflow: hidden; aspect-ratio: 1; background: var(--line); }
+.album img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.subs { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-top: 10px; }
+.subs .stack { display: flex; }
+.subs .stack span, .subs .stack img {
+  width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--surface);
+  margin-left: -10px; object-fit: cover; background: var(--accent-soft);
+  display: grid; place-items: center; font-size: 12px; font-weight: 800; color: var(--accent-ink);
+}
+.subs .stack > :first-child { margin-left: 0; }
+.subs p { font-size: 14px; color: var(--ink-2); flex: 1; min-width: 0; }
+
+.mini-pet { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-top: 10px; }
+.mini-pet img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex: none; }
+.mini-pet .who { flex: 1; min-width: 0; }
+.mini-pet .who b { display: block; font-size: 15px; }
+.mini-pet .who small { color: var(--ink-2); font-size: 13px; }
+
+.tabbar {
+  display: flex; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 6px 4px calc(6px + 2px);
+}
+.tabbar button {
+  flex: 1; display: grid; justify-items: center; gap: 3px;
+  min-height: 48px; color: var(--ink-2); border-radius: 12px;
+  font-size: 11px; font-weight: 600;
+}
+.tabbar button.active { color: var(--accent); }
+.tabbar button span { line-height: 1; }
+
+.overlay {
+  position: absolute; z-index: 50;
+  top: 59px; left: 0; right: 0; bottom: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+}
+.overlay[hidden] { display: none; }
+.overlay-head {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--surface); border-bottom: 1px solid var(--line);
+  min-height: 56px;
+}
+.overlay-head .back {
+  flex: none; width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--ink);
+}
+.overlay-head .back:hover { background: var(--bg); }
+.overlay-head .title { flex: 1; min-width: 0; font-size: 17px; font-weight: 700; }
+.overlay-head .title small { display: block; font-size: 12px; color: var(--ink-2); font-weight: 600; }
+.overlay-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 16px; }
+.overlay-body::-webkit-scrollbar { display: none; }
+
+.chat-messages { display: grid; gap: 8px; }
+.msg { max-width: 78%; padding: 10px 14px; border-radius: 18px; font-size: 15px; }
+.msg.them { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 6px; justify-self: start; }
+.msg.me { background: var(--accent); color: #fff; border-bottom-right-radius: 6px; justify-self: end; }
+.msg time { display: block; font-size: 11px; opacity: .65; margin-top: 3px; }
+.chat-form {
+  flex: none; display: flex; gap: 8px; padding: 10px 12px calc(10px + 34px);
+  background: var(--surface); border-top: 1px solid var(--line);
+}
+.chat-form input {
+  flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 999px;
+  padding: 10px 16px; font-size: 15px; background: var(--bg);
+}
+.chat-form button {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: #fff; display: grid; place-items: center;
+}
+
+.sheet {
+  position: absolute; z-index: 60; left: 0; right: 0; bottom: 0;
+  background: var(--surface); border-radius: 24px 24px 0 0;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.18);
+  padding: 18px 18px calc(18px + 34px);
+  max-height: 82%; overflow-y: auto;
+}
+.sheet[hidden] { display: none; }
+.sheet .grip { width: 40px; height: 4px; border-radius: 999px; background: var(--line); margin: 0 auto 14px; }
+.sheet h3 { margin: 0 0 12px; font-size: 18px; }
+
+.field { display: grid; gap: 6px; margin-bottom: 12px; }
+.field label { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.field input, .field textarea, .field select {
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 12px 14px; font-size: 15px; background: var(--bg); width: 100%;
+}
+.field textarea { resize: vertical; min-height: 72px; }
+.field .err { font-size: 13px; color: var(--danger); font-weight: 600; }
+.field input[aria-invalid="true"] { border-color: var(--danger); }
+
+.viewer { position: absolute; z-index: 70; inset: 0; background: #111214; display: flex; flex-direction: column; }
+.viewer[hidden] { display: none; }
+.viewer img { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
+.viewer .cap { flex: none; color: #fff; padding: 14px 18px calc(14px + 34px); font-size: 15px; }
+.viewer .close {
+  position: absolute; top: 70px; right: 14px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,.14); color: #fff; display: grid; place-items: center;
+}
+
+.toast {
+  position: absolute; z-index: 80; left: 50%; bottom: 110px;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--ink); color: #fff; font-size: 14px; font-weight: 600;
+  padding: 10px 18px; border-radius: 999px; opacity: 0;
+  transition: opacity .2s ease, transform .2s ease; pointer-events: none;
+  max-width: 86%; text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.empty { text-align: center; color: var(--ink-2); padding: 32px 16px; font-size: 15px; }
+.empty b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="phone-frame" data-phone-shell data-platform="iphone">
+  <span class="hardware-button silent" aria-hidden="true"></span>
+  <span class="hardware-button volume-up" aria-hidden="true"></span>
+  <span class="hardware-button volume-down" aria-hidden="true"></span>
+  <span class="hardware-button power" aria-hidden="true"></span>
+
+  <section class="phone-screen" data-phone-screen>
+    <main class="phone-content" data-phone-content>
+      <div class="app">
+        <main class="app-main" id="appMain">
+
+          <section class="screen" id="screen-feed">
+            <div class="brand">
+              <span class="paw-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 13.5c-2.6 0-5.5 2.1-5.5 4.4 0 1.5 1.1 2.6 2.7 2.6 1 0 1.9-.5 2.8-.5s1.8.5 2.8.5c1.6 0 2.7-1.1 2.7-2.6 0-2.3-2.9-4.4-5.5-4.4zM6.2 8.6c-1.1-.3-2.3.8-2.6 2.4-.3 1.6.4 3 1.5 3.3 1.1.3 2.3-.8 2.6-2.4.3-1.6-.4-3-1.5-3.3zm11.6 0c-1.1.3-1.8 1.7-1.5 3.3.3 1.6 1.5 2.7 2.6 2.4 1.1-.3 1.8-1.7 1.5-3.3-.3-1.6-1.5-2.7-2.6-2.4zM9.4 3.2c-1.2.2-2 1.7-1.8 3.4.2 1.7 1.3 3 2.5 2.8 1.2-.2 2-1.7 1.8-3.4-.2-1.7-1.3-3-2.5-2.8zm5.2 0c-1.2.2-2 1.7-1.8 3.4.2 1.7 1.3 3 2.5 2.8 1.2-.2 2-1.7 1.8-3.4-.2-1.7-1.3-3-2.5-2.8z"/></svg>
+              </span>
+              Лапа
+            </div>
+            <div class="search">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input id="feedSearch" type="search" placeholder="Поиск питомцев" aria-label="Поиск питомцев" />
+            </div>
+            <div class="stories" id="stories"></div>
+            <div id="feedPosts"></div>
+          </section>
+
+          <section class="screen" id="screen-diary" hidden>
+            <h1>Дневник</h1>
+            <div class="pet-switch" id="petSwitch" role="group" aria-label="Выбор питомца"></div>
+            <div class="tabs" id="diaryTabs" role="tablist" aria-label="Разделы дневника"></div>
+            <div class="diary-body" id="diaryContent"></div>
+          </section>
+
+          <section class="screen" id="screen-map" hidden>
+            <h1>Рядом</h1>
+            <p style="color:var(--ink-2);font-size:14px;margin-top:2px;">Владельцы и их питомцы неподалёку</p>
+            <div class="map-wrap">
+              <svg class="map" viewBox="0 0 360 300" role="img" aria-label="Карта района с владельцами питомцев">
+                <rect width="360" height="300" fill="#E9EFEA"/>
+                <path d="M0 210 C 60 190, 120 240, 190 220 S 320 180, 360 200 L 360 300 L 0 300 Z" fill="#CFE3EC"/>
+                <rect x="24" y="24" width="130" height="110" rx="18" fill="#D5E6D2"/>
+                <rect x="210" y="30" width="120" height="90" rx="18" fill="#D5E6D2"/>
+                <path d="M0 150 L 360 140" stroke="#FFFFFF" stroke-width="14" fill="none"/>
+                <path d="M150 0 L 160 300" stroke="#FFFFFF" stroke-width="12" fill="none"/>
+                <path d="M0 60 L 360 80" stroke="#FFFFFF" stroke-width="8" fill="none"/>
+                <path d="M280 100 L 290 300" stroke="#FFFFFF" stroke-width="8" fill="none"/>
+                <circle cx="89" cy="79" r="26" fill="#BFDCC0"/>
+                <circle cx="270" cy="75" r="20" fill="#BFDCC0"/>
+                <path d="M40 170 q 30 -18 60 0" stroke="#E4D9BE" stroke-width="5" fill="none"/>
+                <path d="M220 180 q 34 -20 68 0" stroke="#E4D9BE" stroke-width="5" fill="none"/>
+              </svg>
+              <div id="mapPins"></div>
+              <button class="fab" id="nearbyToggle" aria-pressed="false">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span id="nearbyToggleLabel">Я рядом</span>
+              </button>
+            </div>
+            <h2 class="section-title">Поблизости</h2>
+            <div id="nearbyList"></div>
+          </section>
+
+          <section class="screen" id="screen-groups" hidden>
+            <h1>Группы</h1>
+            <h2 class="section-title">Мои группы</h2>
+            <div id="myGroups"></div>
+            <h2 class="section-title">Рекомендуемые</h2>
+            <div id="discoverGroups"></div>
+            <button class="btn ghost block" id="createGroupBtn" style="margin-top:16px;">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              Создать группу
+            </button>
+          </section>
+
+          <section class="screen" id="screen-profile" hidden>
+            <div id="profileContent"></div>
+          </section>
+
+        </main>
+
+        <nav class="tabbar" id="tabbar" aria-label="Основная навигация">
+          <button data-tab="feed" class="active" aria-selected="true">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+            <span>Лента</span>
+          </button>
+          <button data-tab="diary" aria-selected="false">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Дневник</span>
+          </button>
+          <button data-tab="map" aria-selected="false">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Рядом</span>
+          </button>
+          <button data-tab="groups" aria-selected="false">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Группы</span>
+          </button>
+          <button data-tab="profile" aria-selected="false">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Профиль</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="overlay" id="overlay" hidden>
+        <div class="overlay-head">
+          <button class="back" id="overlayBack" aria-label="Назад">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="title" id="overlayTitle"></div>
+        </div>
+        <div class="overlay-body" id="overlayBody"></div>
+      </div>
+
+      <div class="sheet" id="sheet" hidden>
+        <div class="grip" aria-hidden="true"></div>
+        <div id="sheetBody"></div>
+      </div>
+
+      <div class="viewer" id="viewer" hidden>
+        <button class="close" id="viewerClose" aria-label="Закрыть">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <img id="viewerImg" alt="" />
+        <div class="cap" id="viewerCap"></div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <div class="status-bar" aria-hidden="true">
+      <span>9:41</span>
+      <span class="status-icons">
+        <svg viewBox="0 0 18 12"><path d="M1 10.5h2V8H1v2.5Zm4 0h2V5.5H5v5Zm4 0h2V3H9v7.5Zm4 0h2V.5h-2v10Z"/></svg>
+        <svg viewBox="0 0 18 12"><path d="M9 11.2 7.2 9.4a2.55 2.55 0 0 1 3.6 0L9 11.2Zm4.1-4.1-1.35 1.35a3.9 3.9 0 0 0-5.5 0L4.9 7.1a5.8 5.8 0 0 1 8.2 0Zm3-3-1.35 1.35a8.15 8.15 0 0 0-11.5 0L1.9 4.1a10.05 10.05 0 0 1 14.2 0Z"/></svg>
+        <svg class="battery" viewBox="0 0 27 12"><path fill-rule="evenodd" d="M2.5 1h19A2.5 2.5 0 0 1 24 3.5v5a2.5 2.5 0 0 1-2.5 2.5h-19A2.5 2.5 0 0 1 0 8.5v-5A2.5 2.5 0 0 1 2.5 1Zm0 1A1.5 1.5 0 0 0 1 3.5v5A1.5 1.5 0 0 0 2.5 10h19A1.5 1.5 0 0 0 23 8.5v-5A1.5 1.5 0 0 0 21.5 2h-19Zm.5 1h17.5A1.5 1.5 0 0 1 22 4.5v3A1.5 1.5 0 0 1 20.5 9H3V3Zm22 1.5a1.5 1.5 0 0 1 0 3v-3Z"/></svg>
+      </span>
+    </div>
+    <div class="dynamic-island" aria-hidden="true"></div>
+    <div class="home-indicator" aria-hidden="true"></div>
+  </section>
+</div>
+
+<script>
+const PETS = {
+  rex: {
+    id: 'rex', name: 'Рекс', species: 'Собака', breed: 'Золотистый ретривер', age: '3 года',
+    avatar: 'assets/rex-avatar.jpg', cover: 'assets/rex-1.jpg',
+    bio: 'Дружелюбный и активный пёс. Обожает озеро, долгие прогулки и игры с мячом.',
+    posts: 47, subscribers: 128, following: 12,
+    weight: [30.2, 30.0, 29.8, 29.9, 29.6, 29.4, 29.5],
+    meals: [
+      { time: '08:00', food: 'Корм «Лесная дичь»', grams: 350, kcal: 980 },
+      { time: '13:00', food: 'Творог с ягодами', grams: 150, kcal: 210 },
+      { time: '19:00', food: 'Корм «Лесная дичь»', grams: 350, kcal: 980 }
+    ],
+    events: [
+      { day: 12, title: 'Ветеринар', place: 'Клиника «Доктор Айболит»', time: '10:00', note: 'Плановый осмотр, врач Смирнова И.П.' },
+      { day: 20, title: 'Обработка от паразитов', place: 'Дома', time: '21:00', note: 'Капли на холку' }
+    ],
+    habits: [
+      { icon: 'swim', text: 'Обожает плавать в озере' },
+      { icon: 'bolt', text: 'Не любит грозу — прячется под столом' },
+      { icon: 'star', text: 'Знает команду «сидеть» с 1,5 лет' },
+      { icon: 'alert', text: 'Аллергия на куриное мясо' }
+    ],
+    album: [
+      { src: 'assets/rex-1.jpg', caption: 'Рекс на прогулке в парке' },
+      { src: 'assets/rex-2.jpg', caption: 'Любимая поза для сна' },
+      { src: 'assets/rex-avatar.jpg', caption: 'Портрет после купания' }
+    ]
+  },
+  musya: {
+    id: 'musya', name: 'Муся', species: 'Кошка', breed: 'Ориентальная', age: '2 года',
+    avatar: 'assets/musya-avatar.jpg', cover: 'assets/musya-1.jpg',
+    bio: 'Грациозная и любопытная. Спит на подоконнике и следит за птицами.',
+    posts: 35, subscribers: 96, following: 8,
+    weight: [4.1, 4.0, 4.0, 3.9, 3.9, 3.8, 3.8],
+    meals: [
+      { time: '08:30', food: 'Паштет с курицей', grams: 85, kcal: 95 },
+      { time: '14:00', food: 'Корм для кошек', grams: 60, kcal: 180 },
+      { time: '20:00', food: 'Паштет с рыбой', grams: 85, kcal: 90 }
+    ],
+    events: [
+      { day: 8, title: 'Ветеринар', place: 'Ветеринарный центр «Мур»', time: '14:00', note: 'Вакцинация, врач Козлова А.В.' },
+      { day: 25, title: 'Чистка зубов', place: 'Ветеринарный центр «Мур»', time: '11:00', note: 'Плановая процедура' }
+    ],
+    habits: [
+      { icon: 'sun', text: 'Спит на подоконнике с 10:00 до 16:00' },
+      { icon: 'ball', text: 'Играет с мячиком по вечерам' },
+      { icon: 'alert', text: 'Не любит, когда гладят живот' },
+      { icon: 'star', text: 'Приучена к лотку с 2 месяцев' }
+    ],
+    album: [
+      { src: 'assets/musya-1.jpg', caption: 'Муся на солнечной полке' },
+      { src: 'assets/musya-2.jpg', caption: 'Внимательный взгляд' },
+      { src: 'assets/musya-avatar.jpg', caption: 'После умывания' }
+    ]
+  }
+};
+
+const OTHERS = {
+  barsik: {
+    id: 'barsik', name: 'Барсик', species: 'Собака', breed: 'Золотистый ретривер', age: '2 года',
+    avatar: 'assets/feed-1.jpg', cover: 'assets/feed-1.jpg',
+    bio: 'Весёлый и общительный. Всегда рад новым знакомствам на прогулке.',
+    posts: 23, subscribers: 54, following: 8,
+    album: [{ src: 'assets/feed-1.jpg', caption: 'Барсик на утренней пробежке' }]
+  },
+  kuzya: {
+    id: 'kuzya', name: 'Кузя', species: 'Кошка', breed: 'Британский короткошёрстный', age: '7 месяцев',
+    avatar: 'assets/feed-2.jpg', cover: 'assets/feed-2.jpg',
+    bio: 'Любопытный котёнок. Первый раз увидел снег — теперь хочет гулять каждый день.',
+    posts: 12, subscribers: 31, following: 5,
+    album: [{ src: 'assets/feed-2.jpg', caption: 'Кузя и первый снег' }]
+  }
+};
+
+const POSTS = [
+  {
+    id: 1, petId: 'barsik', time: '2 ч назад',
+    text: 'Утренняя пробежка в парке! Барсик сегодня был очень быстрым.',
+    img: 'assets/feed-1.jpg', imgW: 960, imgH: 643,
+    likes: 24, liked: false,
+    comments: [
+      { who: 'Анна', text: 'Какой красавец!' },
+      { who: 'Дмитрий', text: 'Барсик, привет от Кузи' }
+    ]
+  },
+  {
+    id: 2, petId: 'musya', time: '4 ч назад',
+    text: 'Солнечная полка — лучшее место для дневного сна.',
+    img: 'assets/musya-1.jpg', imgW: 960, imgH: 643,
+    likes: 41, liked: false,
+    comments: [{ who: 'Мария', text: 'Муся, солнышко!' }]
+  },
+  {
+    id: 3, petId: 'kuzya', time: 'вчера',
+    text: 'Первый раз видел снег. Очень удивлён!',
+    img: 'assets/feed-2.jpg', imgW: 960, imgH: 640,
+    likes: 18, liked: false,
+    comments: [{ who: 'Ольга', text: 'Кузя, ты молодец!' }]
+  },
+  {
+    id: 4, petId: 'rex', time: 'вчера',
+    text: 'Обед из рук хозяина — особое удовольствие.',
+    img: 'assets/rex-1.jpg', imgW: 960, imgH: 720,
+    likes: 33, liked: false,
+    comments: [{ who: 'Анна', text: 'Рекс, приятного аппетита!' }]
+  }
+];
+
+const GROUPS = [
+  { id: 'g1', name: 'Собаки нашего двора', members: 128, joined: true, img: 'assets/rex-2.jpg', desc: 'Группа для собак и их владельцев нашего двора. Договариваемся о совместных прогулках и делимся новостями.' },
+  { id: 'g2', name: 'Кошачьи посиделки', members: 96, joined: true, img: 'assets/musya-2.jpg', desc: 'Место, где кошки и их люди обсуждают всё: от кормов до любимых мест для сна.' },
+  { id: 'g3', name: 'Ветеринарные советы', members: 342, joined: false, img: 'assets/feed-1.jpg', desc: 'Вопросы здоровья питомцев, советы и рекомендации. Без самолечения — только проверенные факты.' },
+  { id: 'g4', name: 'Гуляем вместе в парке', members: 57, joined: false, img: 'assets/feed-2.jpg', desc: 'Организуем совместные прогулки в городском парке каждые выходные.' }
+];
+
+const NEARBY = [
+  { id: 'n1', owner: 'Анна', pet: 'Барсик', species: 'пёс', dist: 120, note: 'Гуляем у фонтана', img: 'assets/feed-1.jpg', x: 30, y: 34 },
+  { id: 'n2', owner: 'Дмитрий', pet: 'Кузя', species: 'кот', dist: 250, note: 'Кот на прогулке с поводком', img: 'assets/feed-2.jpg', x: 66, y: 26 },
+  { id: 'n3', owner: 'Ольга', pet: 'Тайсон', species: 'пёс', dist: 400, note: 'Ищем компанию для бега', img: null, x: 24, y: 64 },
+  { id: 'n4', owner: 'Мария', pet: 'Луна', species: 'кошка', dist: 550, note: 'Спокойная прогулка в парке', img: null, x: 58, y: 72 }
+];
+
+const CHAT = {
+  person: 'Анна', pet: 'Барсик', img: 'assets/feed-1.jpg',
+  messages: [
+    { from: 'them', text: 'Привет! Барсик ищет компанию для прогулки в 18:00 у фонтана', time: '17:02' },
+    { from: 'me', text: 'Привет! Рекс будет рад. Придём в 18:00', time: '17:05' },
+    { from: 'them', text: 'Отлично! Тогда встречаемся у главного входа', time: '17:06' }
+  ]
+};
+
+const state = {
+  tab: 'feed', pet: 'rex', diaryTab: 'overview',
+  meNearby: false, subscribed: { barsik: false, kuzya: false },
+  feedQuery: '', openComments: {}
+};
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const ICONS = {
+  heart: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  comment: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  send: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>',
+  calendar: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  clock: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  plus: '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  swim: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 16c2 0 2-1.5 4-1.5S8 16 10 16s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5"/><path d="M2 20c2 0 2-1.5 4-1.5S8 20 10 20s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5"/><path d="M8 12V5a2 2 0 0 1 4 0"/><path d="M14 12V5a2 2 0 0 1 4 0"/></svg>',
+  bolt: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+  star: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+  alert: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  sun: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
+  ball: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 0 20M2 12h20"/></svg>'
+};
+
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function petById(id) {
+  return PETS[id] || OTHERS[id];
+}
+
+const DIMS = { rex: [960, 720], musya: [960, 614], barsik: [960, 643], kuzya: [960, 640] };
+
+function avatarHtml(pet, size) {
+  if (pet.avatar) {
+    const [w, h] = DIMS[pet.id] || [960, 643];
+    return `<img src="${pet.avatar}" width="${w}" height="${h}" alt="${esc(pet.name)}" style="${size ? `width:${size}px;height:${size}px;` : ''}">`;
+  }
+  return `<span aria-hidden="true">${esc(pet.name[0])}</span>`;
+}
+
+function renderStories() {
+  const all = [PETS.rex, PETS.musya, OTHERS.barsik, OTHERS.kuzya];
+  $('#stories').innerHTML = all.map((p) => `
+    <button class="story" data-pet="${p.id}" aria-label="Открыть профиль: ${esc(p.name)}">
+      <span class="ring">${avatarHtml(p)}</span>
+      <span>${esc(p.name)}</span>
+    </button>`).join('');
+}
+
+function renderFeed() {
+  const q = state.feedQuery.trim().toLowerCase();
+  const posts = POSTS.filter((p) => {
+    const pet = petById(p.petId);
+    return !q || pet.name.toLowerCase().includes(q) || p.text.toLowerCase().includes(q);
+  });
+  const box = $('#feedPosts');
+  if (!posts.length) {
+    box.innerHTML = `<div class="empty"><b>Ничего не найдено</b>Попробуйте другой запрос</div>`;
+    return;
+  }
+  box.innerHTML = posts.map((p) => {
+    const pet = petById(p.petId);
+    const open = state.openComments[p.id];
+    return `
+    <article class="post" data-post="${p.id}">
+      <div class="post-head">
+        <img src="${pet.avatar}" width="960" height="643" alt="${esc(pet.name)}">
+        <div class="who"><b>${esc(pet.name)}</b><time>${esc(p.time)}</time></div>
+      </div>
+      <p class="post-text">${esc(p.text)}</p>
+      <img class="post-img" src="${p.img}" width="${p.imgW}" height="${p.imgH}" alt="${esc(p.text)}" loading="lazy">
+      <div class="post-actions">
+        <button class="act ${p.liked ? 'liked' : ''}" data-like="${p.id}" aria-pressed="${p.liked}" aria-label="Нравится">
+          ${ICONS.heart}<span>${p.likes}</span>
+        </button>
+        <button class="act" data-comments="${p.id}" aria-expanded="${!!open}" aria-label="Комментарии">
+          ${ICONS.comment}<span>${p.comments.length}</span>
+        </button>
+      </div>
+      <div class="post-likes">${p.likes} отметок «нравится»</div>
+      ${open ? `
+      <div class="post-comments">
+        ${p.comments.map((c) => `<p><b>${esc(c.who)}</b> ${esc(c.text)}</p>`).join('')}
+      </div>
+      <form class="comment-form" data-comment-form="${p.id}">
+        <input type="text" placeholder="Написать комментарий…" aria-label="Написать комментарий" required maxlength="200">
+        <button type="submit" aria-label="Отправить комментарий">${ICONS.send}</button>
+      </form>` : ''}
+    </article>`;
+  }).join('');
+}
+
+function renderPetSwitch() {
+  $('#petSwitch').innerHTML = Object.values(PETS).map((p) => `
+    <button class="pet-chip ${state.pet === p.id ? 'active' : ''}" data-pet-btn="${p.id}" aria-pressed="${state.pet === p.id}">
+      ${avatarHtml(p)}
+      <span><b>${esc(p.name)}</b><small>${esc(p.breed)}</small></span>
+    </button>`).join('');
+}
+
+function renderDiaryTabs() {
+  const tabs = [['overview', 'Обзор'], ['diet', 'Рацион'], ['calendar', 'Календарь'], ['habits', 'Привычки']];
+  $('#diaryTabs').innerHTML = tabs.map(([id, label]) => `
+    <button class="tab ${state.diaryTab === id ? 'active' : ''}" data-diary-tab="${id}" role="tab" aria-selected="${state.diaryTab === id}">${label}</button>
+  `).join('');
+}
+
+function weightSpark(values) {
+  const w = 200, h = 48, pad = 4;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = pad + (i * (w - pad * 2)) / (values.length - 1);
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Динамика веса">
+    <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function nextEvent(pet) {
+  return pet.events.filter((e) => e.day >= 9).sort((a, b) => a.day - b.day)[0] || null;
+}
+
+function renderDiary() {
+  const pet = PETS[state.pet];
+  const box = $('#diaryContent');
+  if (state.diaryTab === 'overview') {
+    const ev = nextEvent(pet);
+    const totalKcal = pet.meals.reduce((s, m) => s + m.kcal, 0);
+    box.innerHTML = `
+      <div class="card stat-card">
+        <div class="label">Вес сейчас</div>
+        <div class="value">${pet.weight[pet.weight.length - 1].toFixed(1)} <small>кг</small></div>
+        ${weightSpark(pet.weight)}
+      </div>
+      ${ev ? `
+      <div class="card vet-card">
+        <div class="date-badge"><b>${ev.day}</b><span>окт</span></div>
+        <div class="info">
+          <b>${esc(ev.title)}</b>
+          <p>${esc(ev.place)}${ev.time ? ' · ' + esc(ev.time) : ''}</p>
+          <p>${esc(ev.note)}</p>
+        </div>
+        <button class="btn ghost go" data-goto-calendar>Календарь</button>
+      </div>` : '<div class="empty"><b>Нет предстоящих событий</b>Добавьте запись в календарь</div>'}
+      <div class="card stat-card">
+        <div class="label">Сегодня</div>
+        <div class="value" style="font-size:20px;">${pet.meals.length} приёма пищи · ${totalKcal} ккал</div>
+      </div>`;
+  } else if (state.diaryTab === 'diet') {
+    const totalKcal = pet.meals.reduce((s, m) => s + m.kcal, 0);
+    box.innerHTML = `
+      <h2 class="section-title">Сегодня, 9 октября</h2>
+      <div class="list">
+        ${pet.meals.map((m) => `
+          <div class="card meal">
+            <span class="time">${esc(m.time)}</span>
+            <span class="what"><b>${esc(m.food)}</b><small>${m.grams} г</small></span>
+            <span class="kcal">${m.kcal} ккал</span>
+          </div>`).join('')}
+      </div>
+      <div class="card stat-card" style="margin-top:12px;">
+        <div class="label">Итого за день</div>
+        <div class="value">${totalKcal} <small>ккал</small></div>
+      </div>
+      <button class="btn block" data-add-meal style="margin-top:14px;">${ICONS.plus} Добавить приём пищи</button>`;
+  } else if (state.diaryTab === 'calendar') {
+    box.innerHTML = `
+      <div class="card cal">
+        <div class="cal-head"><b>Октябрь 2026</b><span style="font-size:13px;color:var(--ink-2);font-weight:600;">нажмите на день</span></div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <button class="btn block" data-add-event style="margin-top:14px;">${ICONS.plus} Добавить событие</button>`;
+    renderCalendar(pet);
+  } else {
+    box.innerHTML = `
+      <h2 class="section-title">Особенности и привычки</h2>
+      <div class="list">
+        ${pet.habits.map((h) => `
+          <div class="card habit">
+            <span class="h-icon">${ICONS[h.icon] || ICONS.star}</span>
+            <p>${esc(h.text)}</p>
+          </div>`).join('')}
+      </div>
+      <button class="btn block" data-add-habit style="margin-top:14px;">${ICONS.plus} Добавить заметку</button>`;
+  }
+}
+
+function renderCalendar(pet) {
+  const grid = $('#calGrid');
+  if (!grid) return;
+  const dows = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  let html = dows.map((d) => `<div class="dow">${d}</div>`).join('');
+  const startOffset = 3;
+  for (let i = 0; i < startOffset; i++) html += '<div class="day blank"></div>';
+  for (let day = 1; day <= 31; day++) {
+    const evs = pet.events.filter((e) => e.day === day);
+    const cls = ['day'];
+    if (day === 9) cls.push('today');
+    if (evs.length) cls.push('has-event');
+    html += `<button class="${cls.join(' ')}" data-day="${day}" aria-label="${day} октября${evs.length ? ', есть события' : ''}">${day}${evs.length ? '<span class="dot"></span>' : ''}</button>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderMap() {
+  const pins = $('#mapPins');
+  let html = '';
+  if (state.meNearby) {
+    html += `
+      <div class="map-pin me" style="left:46%;top:50%;">
+        <span class="tag">Вы</span>
+        <span class="bubble"><img src="${PETS.rex.avatar}" width="960" height="720" alt="Ваше местоположение"></span>
+      </div>`;
+  }
+  NEARBY.forEach((n) => {
+    html += `
+      <div class="map-pin" style="left:${n.x}%;top:${n.y}%;" data-near="${n.id}">
+        <span class="bubble">${n.img ? `<img src="${n.img}" width="960" height="643" alt="${esc(n.pet)}">` : `<span aria-hidden="true">${esc(n.pet[0])}</span>`}</span>
+      </div>`;
+  });
+  pins.innerHTML = html;
+
+  $('#nearbyList').innerHTML = NEARBY.map((n) => `
+    <div class="card near-card">
+      ${n.img ? `<img src="${n.img}" width="960" height="643" alt="${esc(n.pet)}">` : `<span class="avatar-fallback" aria-hidden="true">${esc(n.pet[0])}</span>`}
+      <div class="who">
+        <b>${esc(n.owner)} и ${esc(n.pet)}</b>
+        <small>${esc(n.note)}</small>
+      </div>
+      <span class="dist">${n.dist} м</span>
+      <button class="btn" data-chat="${n.id}" ${state.meNearby ? '' : 'disabled'}>Написать</button>
+    </div>`).join('') + (!state.meNearby ? '<p style="font-size:13px;color:var(--ink-2);margin-top:10px;">Включите «Я рядом», чтобы писать владельцам и видеть свою метку на карте.</p>' : '');
+}
+
+function renderGroups() {
+  const mine = GROUPS.filter((g) => g.joined);
+  const disc = GROUPS.filter((g) => !g.joined);
+  const card = (g) => `
+    <div class="card group-card">
+      <img src="${g.img}" width="960" height="720" alt="">
+      <div class="who"><b>${esc(g.name)}</b><small>${g.members} участников</small></div>
+      <button class="btn ${g.joined ? 'ghost' : ''}" data-group="${g.id}">${g.joined ? 'Открыть' : 'Вступить'}</button>
+    </div>`;
+  $('#myGroups').innerHTML = mine.length ? mine.map(card).join('') : '<div class="empty"><b>Пока нет групп</b>Вступите в рекомендуемые ниже</div>';
+  $('#discoverGroups').innerHTML = disc.length ? disc.map(card).join('') : '<div class="empty"><b>Вы вступили во все группы</b>Новые появятся позже</div>';
+}
+
+function renderProfile() {
+  const pet = PETS[state.pet];
+  const subs = state.pet === 'rex'
+    ? [{ n: 'Анна', img: 'assets/feed-1.jpg' }, { n: 'Дмитрий', img: 'assets/feed-2.jpg' }, { n: 'Ольга' }, { n: 'Мария' }]
+    : [{ n: 'Мария', img: 'assets/feed-2.jpg' }, { n: 'Анна', img: 'assets/feed-1.jpg' }, { n: 'Ольга' }];
+  $('#profileContent').innerHTML = `
+    <div class="profile-cover"><img src="${pet.cover}" width="960" height="720" alt="${esc(pet.name)}"></div>
+    <div class="profile-head">
+      <img class="avatar" src="${pet.avatar}" width="960" height="720" alt="${esc(pet.name)}">
+      <div class="names"><b>${esc(pet.name)}</b><p>${esc(pet.breed)} · ${esc(pet.age)}</p></div>
+    </div>
+    <p class="profile-bio">${esc(pet.bio)}</p>
+    <div class="profile-stats">
+      <div><b>${pet.posts}</b><span>публикации</span></div>
+      <div><b>${pet.subscribers}</b><span>подписчики</span></div>
+      <div><b>${pet.following}</b><span>подписки</span></div>
+    </div>
+    <h2 class="section-title">Фотоальбом</h2>
+    <div class="album">
+      ${pet.album.map((a, i) => `<button data-photo="${state.pet}:${i}" aria-label="Открыть фото">${avatarHtml({ avatar: a.src, name: pet.name })}</button>`).join('')}
+    </div>
+    <h2 class="section-title">Подписчики</h2>
+    <div class="card subs">
+      <span class="stack">
+        ${subs.map((s) => s.img ? `<img src="${s.img}" width="960" height="643" alt="${esc(s.n)}">` : `<span aria-hidden="true">${esc(s.n[0])}</span>`).join('')}
+      </span>
+      <p>${subs.map((s) => s.n).join(', ')} и ещё ${pet.subscribers - subs.length}</p>
+    </div>
+    <h2 class="section-title">Другие питомцы</h2>
+    ${Object.values(OTHERS).map((p) => `
+      <button class="card mini-pet" data-pet="${p.id}" style="width:100%;text-align:left;">
+        ${avatarHtml(p)}
+        <span class="who"><b>${esc(p.name)}</b><small>${esc(p.breed)} · ${esc(p.age)}</small></span>
+      </button>`).join('')}`;
+}
+
+function switchTab(tab) {
+  state.tab = tab;
+  $$('#tabbar button').forEach((b) => {
+    const active = b.dataset.tab === tab;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', active);
+  });
+  ['feed', 'diary', 'map', 'groups', 'profile'].forEach((t) => {
+    $('#screen-' + t).hidden = t !== tab;
+  });
+  if (tab === 'diary') { renderPetSwitch(); renderDiaryTabs(); renderDiary(); }
+  if (tab === 'map') renderMap();
+  if (tab === 'groups') renderGroups();
+  if (tab === 'profile') renderProfile();
+  if (tab === 'feed') renderFeed();
+  $('#appMain').scrollTop = 0;
+}
+
+function openOverlay(title, sub, bodyHtml) {
+  $('#overlayTitle').innerHTML = sub ? `${esc(title)}<small>${esc(sub)}</small>` : esc(title);
+  $('#overlayBody').innerHTML = bodyHtml;
+  $('#overlay').hidden = false;
+  $('#overlayBack').focus();
+}
+
+function closeOverlay() {
+  $('#overlay').hidden = true;
+  $('#overlayBody').innerHTML = '';
+}
+
+function openChat(nearId) {
+  const n = NEARBY.find((x) => x.id === nearId);
+  if (!n) return;
+  const messages = nearId === 'n1' ? CHAT.messages : [
+    { from: 'them', text: `Привет! Это ${n.owner}. ${n.pet} ищет компанию для прогулки.`, time: '17:10' }
+  ];
+  openOverlay(`${n.owner} и ${n.pet}`, 'в сети', `
+    <div class="chat-messages">
+      ${messages.map((m) => `<div class="msg ${m.from}">${esc(m.text)}<time>${esc(m.time)}</time></div>`).join('')}
+    </div>
+    <form class="chat-form" data-chat-form>
+      <input type="text" placeholder="Сообщение…" aria-label="Сообщение" required maxlength="300" autocomplete="off">
+      <button type="submit" aria-label="Отправить">${ICONS.send}</button>
+    </form>`);
+  const form = $('body').querySelector('[data-chat-form]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = form.querySelector('input');
+    const text = input.value.trim();
+    if (!text) return;
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const box = form.previousElementSibling;
+    box.insertAdjacentHTML('beforeend', `<div class="msg me">${esc(text)}<time>${time}</time></div>`);
+    input.value = '';
+    box.scrollTop = box.scrollHeight;
+    setTimeout(() => {
+      box.insertAdjacentHTML('beforeend', `<div class="msg them">Договорились! До встречи на прогулке.<time>${time}</time></div>`);
+      box.scrollTop = box.scrollHeight;
+    }, 1400);
+  });
+}
+
+function openGroup(id) {
+  const g = GROUPS.find((x) => x.id === id);
+  if (!g) return;
+  const posts = POSTS.filter((p) => p.petId === 'barsik' || p.petId === 'kuzya').slice(0, 2);
+  openOverlay(g.name, `${g.members} участников`, `
+    <div class="card" style="padding:14px;">
+      <img src="${g.img}" width="960" height="720" alt="" style="border-radius:12px;">
+      <p style="margin-top:10px;font-size:15px;">${esc(g.desc)}</p>
+    </div>
+    <button class="btn ${g.joined ? 'ghost danger' : ''} block" data-group-toggle="${g.id}" style="margin-top:14px;">${g.joined ? 'Покинуть группу' : 'Вступить в группу'}</button>
+    <h2 class="section-title">Публикации</h2>
+    ${posts.map((p) => {
+      const pet = petById(p.petId);
+      return `
+      <article class="post">
+        <div class="post-head">
+          <img src="${pet.avatar}" width="960" height="643" alt="${esc(pet.name)}">
+          <div class="who"><b>${esc(pet.name)}</b><time>${esc(p.time)}</time></div>
+        </div>
+        <p class="post-text">${esc(p.text)}</p>
+      </article>`;
+    }).join('')}`);
+}
+
+function openPetProfile(id) {
+  const p = OTHERS[id];
+  if (!p) return;
+  const sub = state.subscribed[id];
+  openOverlay(p.name, `${p.breed} · ${p.age}`, `
+    <div class="profile-cover" style="margin:-16px -16px 0;"><img src="${p.cover}" width="960" height="643" alt="${esc(p.name)}"></div>
+    <div class="profile-head">
+      <img class="avatar" src="${p.avatar}" width="960" height="643" alt="${esc(p.name)}">
+      <div class="names"><b>${esc(p.name)}</b><p>${esc(p.species)} · ${esc(p.age)}</p></div>
+    </div>
+    <p class="profile-bio">${esc(p.bio)}</p>
+    <div class="profile-stats">
+      <div><b>${p.posts}</b><span>публикации</span></div>
+      <div><b>${p.subscribers}</b><span>подписчики</span></div>
+      <div><b>${p.following}</b><span>подписки</span></div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn ${sub ? 'ghost' : ''}" data-subscribe="${p.id}" aria-pressed="${sub}">${sub ? 'Вы подписаны' : 'Подписаться'}</button>
+      <button class="btn ghost" data-chat-pet="${p.id}">Написать</button>
+    </div>
+    <h2 class="section-title">Фото</h2>
+    <div class="album">
+      ${p.album.map((a, i) => `<button data-photo="other:${p.id}:${i}" aria-label="Открыть фото">${avatarHtml({ avatar: a.src, name: p.name })}</button>`).join('')}
+    </div>`);
+}
+
+function openPhoto(src, caption) {
+  $('#viewerImg').src = src;
+  $('#viewerImg').alt = caption;
+  $('#viewerCap').textContent = caption;
+  $('#viewer').hidden = false;
+  $('#viewerClose').focus();
+}
+
+function openSheet(html) {
+  $('#sheetBody').innerHTML = html;
+  $('#sheet').hidden = false;
+  const first = $('#sheetBody').querySelector('input, textarea, select, button');
+  if (first) first.focus();
+}
+
+function closeSheet() {
+  $('#sheet').hidden = true;
+  $('#sheetBody').innerHTML = '';
+}
+
+function field(label, name, type, value, opts = '') {
+  return `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" type="${type}" value="${esc(value || '')}" ${opts}></div>`;
+}
+
+function openMealForm() {
+  openSheet(`
+    <h3>Приём пищи</h3>
+    <form data-form="meal">
+      ${field('Время', 'time', 'time', '12:00', 'required')}
+      ${field('Что дали', 'food', 'text', '', 'required maxlength="80" placeholder="Например: корм с говядиной"')}
+      ${field('Граммы', 'grams', 'number', '', 'required min="1" max="2000" placeholder="150"')}
+      <button class="btn block" type="submit">Сохранить</button>
+    </form>`);
+}
+
+function openHabitForm() {
+  openSheet(`
+    <h3>Заметка о привычке</h3>
+    <form data-form="habit">
+      <div class="field"><label for="f-text">Текст</label><textarea id="f-text" name="text" required maxlength="140" placeholder="Например: боится пылесоса"></textarea></div>
+      <button class="btn block" type="submit">Сохранить</button>
+    </form>`);
+}
+
+function openEventForm() {
+  openSheet(`
+    <h3>Событие в календаре</h3>
+    <form data-form="event">
+      ${field('Дата', 'day', 'number', '', 'required min="1" max="31" placeholder="15"')}
+      ${field('Название', 'title', 'text', '', 'required maxlength="60" placeholder="Ветеринар"')}
+      ${field('Место', 'place', 'text', '', 'maxlength="80" placeholder="Клиника"')}
+      ${field('Время', 'time', 'time', '10:00')}
+      <div class="field"><label for="f-note">Заметка</label><textarea id="f-note" name="note" maxlength="140" placeholder="Детали визита"></textarea></div>
+      <button class="btn block" type="submit">Сохранить</button>
+    </form>`);
+}
+
+function openGroupForm() {
+  openSheet(`
+    <h3>Новая группа</h3>
+    <form data-form="group">
+      ${field('Название', 'name', 'text', '', 'required maxlength="60" placeholder="Например: Хвостатые бегуны"')}
+      <div class="field"><label for="f-desc">Описание</label><textarea id="f-desc" name="desc" required maxlength="200" placeholder="О чём эта группа?"></textarea></div>
+      <button class="btn block" type="submit">Создать</button>
+    </form>`);
+}
+
+function openDaySheet(day) {
+  const pet = PETS[state.pet];
+  const evs = pet.events.filter((e) => e.day === day);
+  openSheet(`
+    <h3>${day} октября</h3>
+    ${evs.length ? `<div class="list">${evs.map((e) => `
+      <div class="card habit">
+        <span class="h-icon">${ICONS.calendar}</span>
+        <p><b>${esc(e.title)}</b><br><span style="color:var(--ink-2);font-size:14px;">${esc(e.place)}${e.time ? ' · ' + esc(e.time) : ''}</span><br><span style="color:var(--ink-2);font-size:14px;">${esc(e.note)}</span></p>
+      </div>`).join('')}</div>` : '<div class="empty"><b>Событий нет</b>Добавьте визит к ветеринару или другую запись</div>'}
+    <button class="btn block" data-add-event style="margin-top:12px;">${ICONS.plus} Добавить событие</button>`);
+}
+
+function bindEvents() {
+  $('#tabbar').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tab]');
+    if (btn) switchTab(btn.dataset.tab);
+  });
+
+  $('#feedSearch').addEventListener('input', (e) => {
+    state.feedQuery = e.target.value;
+    renderFeed();
+  });
+
+  $('#stories').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-pet]');
+    if (btn) openPetProfile(btn.dataset.pet);
+  });
+
+  $('#feedPosts').addEventListener('click', (e) => {
+    const like = e.target.closest('[data-like]');
+    if (like) {
+      const p = POSTS.find((x) => x.id === Number(like.dataset.like));
+      p.liked = !p.liked;
+      p.likes += p.liked ? 1 : -1;
+      renderFeed();
+      return;
+    }
+    const com = e.target.closest('[data-comments]');
+    if (com) {
+      const id = Number(com.dataset.comments);
+      state.openComments[id] = !state.openComments[id];
+      renderFeed();
+    }
+  });
+
+  $('#feedPosts').addEventListener('submit', (e) => {
+    const form = e.target.closest('[data-comment-form]');
+    if (!form) return;
+    e.preventDefault();
+    const input = form.querySelector('input');
+    const text = input.value.trim();
+    if (!text) return;
+    const p = POSTS.find((x) => x.id === Number(form.dataset.commentForm));
+    p.comments.push({ who: 'Вы', text });
+    state.openComments[p.id] = true;
+    renderFeed();
+  });
+
+  $('#petSwitch').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-pet-btn]');
+    if (btn) {
+      state.pet = btn.dataset.petBtn;
+      renderPetSwitch();
+      renderDiary();
+    }
+  });
+
+  $('#diaryTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-diary-tab]');
+    if (btn) {
+      state.diaryTab = btn.dataset.diaryTab;
+      renderDiaryTabs();
+      renderDiary();
+    }
+  });
+
+  $('#diaryContent').addEventListener('click', (e) => {
+    if (e.target.closest('[data-goto-calendar]')) {
+      state.diaryTab = 'calendar';
+      renderDiaryTabs();
+      renderDiary();
+    }
+    if (e.target.closest('[data-add-meal]')) openMealForm();
+    if (e.target.closest('[data-add-habit]')) openHabitForm();
+    if (e.target.closest('[data-add-event]')) openEventForm();
+  });
+
+  $('#diaryContent').addEventListener('click', (e) => {
+    const dayBtn = e.target.closest('[data-day]');
+    if (dayBtn) openDaySheet(Number(dayBtn.dataset.day));
+  });
+
+  $('#nearbyToggle').addEventListener('click', () => {
+    state.meNearby = !state.meNearby;
+    const btn = $('#nearbyToggle');
+    btn.classList.toggle('on', state.meNearby);
+    btn.setAttribute('aria-pressed', state.meNearby);
+    $('#nearbyToggleLabel').textContent = state.meNearby ? 'Вы рядом' : 'Я рядом';
+    renderMap();
+    toast(state.meNearby ? 'Ваша метка видна рядом' : 'Метка скрыта');
+  });
+
+  $('#mapPins').addEventListener('click', (e) => {
+    const pin = e.target.closest('[data-near]');
+    if (pin) {
+      const n = NEARBY.find((x) => x.id === pin.dataset.near);
+      if (n && state.meNearby) openChat(n.id);
+      else if (n) toast('Включите «Я рядом», чтобы писать');
+    }
+  });
+
+  $('#nearbyList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-chat]');
+    if (btn && !btn.disabled) openChat(btn.dataset.chat);
+  });
+
+  $('#myGroups').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-group]');
+    if (btn) openGroup(btn.dataset.group);
+  });
+
+  $('#discoverGroups').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-group]');
+    if (btn) {
+      const g = GROUPS.find((x) => x.id === btn.dataset.group);
+      g.joined = true;
+      g.members += 1;
+      renderGroups();
+      toast(`Вы вступили в «${g.name}»`);
+    }
+  });
+
+  $('#createGroupBtn').addEventListener('click', openGroupForm);
+
+  $('#overlayBody').addEventListener('click', (e) => {
+    const gt = e.target.closest('[data-group-toggle]');
+    if (gt) {
+      const g = GROUPS.find((x) => x.id === gt.dataset.groupToggle);
+      g.joined = !g.joined;
+      g.members += g.joined ? 1 : -1;
+      closeOverlay();
+      renderGroups();
+      toast(g.joined ? `Вы вступили в «${g.name}»` : `Вы покинули «${g.name}»`);
+      return;
+    }
+    const sub = e.target.closest('[data-subscribe]');
+    if (sub) {
+      const id = sub.dataset.subscribe;
+      state.subscribed[id] = !state.subscribed[id];
+      openPetProfile(id);
+      return;
+    }
+    const chatPet = e.target.closest('[data-chat-pet]');
+    if (chatPet) {
+      const p = OTHERS[chatPet.dataset.chatPet];
+      closeOverlay();
+      openChat(p.id === 'barsik' ? 'n1' : 'n2');
+    }
+  });
+
+  $('#profileContent').addEventListener('click', (e) => {
+    const photo = e.target.closest('[data-photo]');
+    if (photo) {
+      const [pid, idx] = photo.dataset.photo.split(':');
+      const pet = PETS[pid];
+      const a = pet.album[Number(idx)];
+      openPhoto(a.src, a.caption);
+    }
+    const mini = e.target.closest('[data-pet]');
+    if (mini) openPetProfile(mini.dataset.pet);
+  });
+
+  $('#overlayBody').addEventListener('click', (e) => {
+    const photo = e.target.closest('[data-photo]');
+    if (photo) {
+      const [, pid, idx] = photo.dataset.photo.split(':');
+      const p = OTHERS[pid];
+      const a = p.album[Number(idx)];
+      openPhoto(a.src, a.caption);
+    }
+  });
+
+  $('#overlayBack').addEventListener('click', closeOverlay);
+  $('#viewerClose').addEventListener('click', () => { $('#viewer').hidden = true; });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-add-event]') && !e.target.closest('#diaryContent')) {
+      if (!$('#sheet').hidden) openEventForm();
+    }
+  });
+
+  $('#sheetBody').addEventListener('click', (e) => {
+    if (e.target.closest('[data-add-event]')) openEventForm();
+  });
+
+  $('#sheetBody').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target.closest('[data-form]');
+    if (!form) return;
+    const type = form.dataset.form;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const pet = PETS[state.pet];
+    if (type === 'meal') {
+      const grams = Number(data.grams);
+      if (!data.time || !data.food || !grams) return;
+      pet.meals.push({ time: data.time, food: data.food, grams, kcal: Math.round(grams * 2.8) });
+      pet.meals.sort((a, b) => a.time.localeCompare(b.time));
+      closeSheet();
+      renderDiary();
+      toast('Приём пищи добавлен');
+    } else if (type === 'habit') {
+      if (!data.text) return;
+      pet.habits.push({ icon: 'star', text: data.text });
+      closeSheet();
+      renderDiary();
+      toast('Заметка добавлена');
+    } else if (type === 'event') {
+      const day = Number(data.day);
+      if (!day || day < 1 || day > 31 || !data.title) return;
+      pet.events.push({ day, title: data.title, place: data.place || 'Не указано', time: data.time || '', note: data.note || '' });
+      closeSheet();
+      state.diaryTab = 'calendar';
+      renderDiaryTabs();
+      renderDiary();
+      toast('Событие добавлено в календарь');
+    } else if (type === 'group') {
+      if (!data.name || !data.desc) return;
+      GROUPS.unshift({ id: 'g' + Date.now(), name: data.name, members: 1, joined: true, img: PETS[state.pet].album[0].src, desc: data.desc });
+      closeSheet();
+      renderGroups();
+      toast('Группа создана');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (!$('#viewer').hidden) $('#viewer').hidden = true;
+      else if (!$('#sheet').hidden) closeSheet();
+      else if (!$('#overlay').hidden) closeOverlay();
+    }
+  });
+}
+
+renderStories();
+renderFeed();
+renderPetSwitch();
+renderDiaryTabs();
+renderDiary();
+renderMap();
+renderGroups();
+renderProfile();
+bindEvents();
+</script>
+</body>
+</html>

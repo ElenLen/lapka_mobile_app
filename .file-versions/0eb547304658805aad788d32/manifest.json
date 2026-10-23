@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "fileName": "index.html",
+  "currentVersionId": "55d1d79a-9d66-4256-a7eb-28bc344dae09",
+  "entries": [
+    {
+      "id": "4c3f7232-d3ae-4822-b852-bc8aed8b1321",
+      "fileName": "index.html",
+      "version": 1,
+      "label": "Version 1",
+      "createdAt": 1791569621892,
+      "source": "ai",
+      "prompt": "[form answers — discovery]\n- На какой платформе показать прототип?: iPhone (iOS) [value: iphone]",
+      "size": 75131,
+      "mime": "text/html; charset=utf-8",
+      "kind": "html",
+      "contentPath": "0001-4c3f7232-d3ae-4822-b852-bc8aed8b1321.html",
+      "promptSource": "message",
+      "contentDigest": "6c95bb4638539a43563d7f0d2e15a0f797104ba672425af1a0a70e1523a14633"
+    },
+    {
+      "id": "55d1d79a-9d66-4256-a7eb-28bc344dae09",
+      "fileName": "index.html",
+      "version": 2,
+      "label": "Version 2",
+      "createdAt": 1791570023598,
+      "source": "ai",
+      "prompt": "Добавить тёмную тему",
+      "size": 78383,
+      "mime": "text/html; charset=utf-8",
+      "kind": "html",
+      "contentPath": "0002-55d1d79a-9d66-4256-a7eb-28bc344dae09.html",
+      "contentDigest": "0aac5613c6bd04b0ca107fcd1205d1f955bd445d0ed5fb1e6af5853e5410d5a6",
+      "promptSource": "message"
+    }
+  ]
+}
